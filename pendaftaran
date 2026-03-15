@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Informasi Santri Terpadu - Pondok Pesantren Al-Inaroh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#E8F5F1', 100: '#C5E5DB', 200: '#9FD4C4', 300: '#78C3AC',
+                            400: '#57B69A', 500: '#0D7A5F', 600: '#0A5C48', 700: '#084536',
+                            800: '#052E25', 900: '#031713'
+                        },
+                        secondary: {
+                            50: '#E8EDF2', 100: '#C5D2E0', 200: '#9FB5CC', 300: '#7898B8',
+                            400: '#5B82A9', 500: '#1A3A5C', 600: '#152D47', 700: '#102032',
+                            800: '#0A141D', 900: '#050A0E'
+                        },
+                        accent: { gold: '#C9A227', goldLight: '#E8C547', goldDark: '#A68520' },
+                        surface: { 50: '#FDFEFE', 100: '#F7FAF8', 200: '#EFF5F2', 300: '#E5EDE9' }
+                    },
+                    fontFamily: { display: ['Amiri', 'serif'], sans: ['Nunito', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg: #F7FAF8; --fg: #084536; --muted: #6B8F82; --accent: #C9A227;
+            --card: #FFFFFF; --border: #E5EDE9; --primary: #0D7A5F; --secondary: #1A3A5C;
+        }
+        * { font-family: 'Nunito', sans-serif; }
+        .font-display { font-family: 'Amiri', serif; }
+        .gradient-primary { background: linear-gradient(135deg, #0D7A5F 0%, #0A5C48 50%, #084536 100%); }
+        .gradient-secondary { background: linear-gradient(135deg, #1A3A5C 0%, #152D47 50%, #102032 100%); }
+        .gradient-gold { background: linear-gradient(135deg, #C9A227 0%, #E8C547 50%, #C9A227 100%); }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(13, 122, 95, 0.1); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        .stagger-1 { animation-delay: 0.1s; } .stagger-2 { animation-delay: 0.2s; } .stagger-3 { animation-delay: 0.3s; } .stagger-4 { animation-delay: 0.4s; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(8, 69, 54, 0.15); }
+        .table-modern tbody tr { transition: all 0.2s ease; }
+        .table-modern tbody tr:hover { background-color: rgba(13, 122, 95, 0.05); }
+        .sidebar-item { position: relative; overflow: hidden; }
+        .sidebar-item::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 3px; background: var(--accent); transform: scaleY(0); transition: transform 0.3s ease; }
+        .sidebar-item:hover::before, .sidebar-item.active::before { transform: scaleY(1); }
+        .btn-primary { background: linear-gradient(135deg, #0D7A5F 0%, #0A5C48 100%); transition: all 0.3s ease; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(13, 122, 95, 0.35); }
+        .btn-secondary { background: linear-gradient(135deg, #1A3A5C 0%, #152D47 100%); transition: all 0.3s ease; }
+        .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(26, 58, 92, 0.35); }
+        .input-modern { transition: all 0.3s ease; border: 2px solid var(--border); }
+        .input-modern:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(13, 122, 95, 0.1); }
+        .modal-overlay { background: rgba(8, 69, 54, 0.6); backdrop-filter: blur(4px); }
+        .badge { font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 9999px; }
+        @media (max-width: 1024px) { .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; } .sidebar.open { transform: translateX(0); } }
+    </style>
+</head>
+<body class="bg-surface-100 min-h-screen">
+
+    <!-- Main Application -->
+    <div id="mainApp" class="min-h-screen">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar fixed left-0 top-0 h-full w-64 gradient-secondary text-white z-50 lg:translate-x-0">
+            <div class="flex flex-col h-full">
+                <div class="p-5 border-b border-white/10">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+                            <svg class="w-7 h-7 text-accent-gold" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C10.34 2 9 3.34 9 5v1.1C6.72 6.56 5 8.58 5 11v9h14v-9c0-2.42-1.72-4.44-4-4.9V5c0-1.66-1.34-3-3-3z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="font-display font-bold text-lg leading-tight">Al-Inaroh</h1>
+                            <p class="text-xs text-white/60">SIS Terpadu</p>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="flex-1 py-4 overflow-y-auto">
+                    <div class="px-4 mb-2"><p class="text-xs text-white/40 uppercase tracking-wider">Menu Utama</p></div>
+                    <button onclick="showPage('dashboard')" data-page="dashboard" class="sidebar-item w-full flex items-center gap-3 px-5 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all">
+                        <i class="fas fa-home w-5"></i><span>Dashboard</span>
+                    </button>
+
+                    <div class="px-4 mt-6 mb-2"><p class="text-xs text-white/40 uppercase tracking-wider">Data Master</p></div>
+                    <button onclick="showPage('dataSantri')" data-page="dataSantri" class="sidebar-item w-full flex items-center gap-3 px-5 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all">
+                        <i class="fas fa-users w-5"></i><span>Data Santri</span>
+                    </button>
+                    <button onclick="showPage('tambahSantri')" data-page="tambahSantri" class="sidebar-item w-full flex items-center gap-3 px-5 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all">
+                        <i class="fas fa-user-plus w-5"></i><span>Tambah Santri</span>
+                    </button>
+                    <button onclick="showPage('riwayat')" data-page="riwayat" class="sidebar-item w-full flex items-center gap-3 px-5 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all">
+                        <i class="fas fa-history w-5"></i><span>Riwayat Data</span>
+                    </button>
+
+                    <div class="px-4 mt-6 mb-2"><p class="text-xs text-white/40 uppercase tracking-wider">Pengaturan</p></div>
+                    <button onclick="showPage('pengaturan')" data-page="pengaturan" class="sidebar-item w-full flex items-center gap-3 px-5 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-all">
+                        <i class="fas fa-cog w-5"></i><span>Pengaturan</span>
+                    </button>
+                </nav>
+
+                <div class="p-4 border-t border-white/10">
+                    <div class="text-center text-white/40 text-xs">&copy; 2024 Al-Inaroh</div>
+                </div>
+            </div>
+        </aside>
+
+        <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden"></div>
+
+        <div class="lg:ml-64">
+            <!-- Header -->
+            <header class="sticky top-0 z-30 glass border-b border-primary-100">
+                <div class="flex items-center justify-between px-4 lg:px-6 py-4">
+                    <div class="flex items-center gap-4">
+                        <button onclick="toggleSidebar()" class="lg:hidden text-primary-600 p-2"><i class="fas fa-bars text-xl"></i></button>
+                        <div>
+                            <h2 class="font-bold text-lg text-primary-700" id="pageTitle">Dashboard</h2>
+                            <p class="text-xs text-primary-400" id="pageSubtitle">Selamat datang di sistem</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button class="relative p-2 text-primary-500 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-all">
+                            <i class="fas fa-bell"></i><span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                        </button>
+                        <div class="hidden sm:flex items-center gap-2 pl-3 border-l border-primary-200">
+                            <div class="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-white text-sm font-bold"><i class="fas fa-user text-sm"></i></div>
+                            <span class="text-sm font-medium text-primary-700">Administrator</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="p-4 lg:p-6">
+                <!-- Dashboard Page -->
+                <div id="page-dashboard" class="page-content">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
+                        <div class="glass rounded-xl p-5 card-hover animate-fade-in-up stagger-1">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center"><i class="fas fa-user-graduate text-primary-600 text-xl"></i></div>
+                                <span class="badge bg-primary-100 text-primary-600"><i class="fas fa-arrow-up mr-1"></i>12%</span>
+                            </div>
+                            <p class="text-2xl lg:text-3xl font-bold text-primary-700" id="statAktif">0</p>
+                            <p class="text-sm text-primary-500 mt-1">Santri Aktif</p>
+                        </div>
+                        <div class="glass rounded-xl p-5 card-hover animate-fade-in-up stagger-2">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="w-12 h-12 rounded-xl bg-secondary-100 flex items-center justify-center"><i class="fas fa-user-plus text-secondary-600 text-xl"></i></div>
+                                <span class="badge bg-secondary-100 text-secondary-600">Baru</span>
+                            </div>
+                            <p class="text-2xl lg:text-3xl font-bold text-secondary-700" id="statBaru">0</p>
+                            <p class="text-sm text-secondary-500 mt-1">Santri Baru</p>
+                        </div>
+                        <div class="glass rounded-xl p-5 card-hover animate-fade-in-up stagger-3">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center"><i class="fas fa-graduation-cap text-green-600 text-xl"></i></div>
+                                <span class="badge bg-green-100 text-green-600">Lulus</span>
+                            </div>
+                            <p class="text-2xl lg:text-3xl font-bold text-green-700" id="statLulus">0</p>
+                            <p class="text-sm text-green-500 mt-1">Santri Lulus</p>
+                        </div>
+                        <div class="glass rounded-xl p-5 card-hover animate-fade-in-up stagger-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center"><i class="fas fa-user-minus text-orange-600 text-xl"></i></div>
+                                <span class="badge bg-orange-100 text-orange-600">Nonaktif</span>
+                            </div>
+                            <p class="text-2xl lg:text-3xl font-bold text-orange-700" id="statNonaktif">0</p>
+                            <p class="text-sm text-orange-500 mt-1">Santri Nonaktif</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+                        <div class="glass rounded-xl p-5 card-hover animate-fade-in-up stagger-5">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center"><i class="fas fa-chalkboard text-white text-xl"></i></div>
+                                <div><p class="text-2xl font-bold text-primary-700" id="statKelas">0</p><p class="text-sm text-primary-500">Jumlah Kelas</p></div>
+                            </div>
+                        </div>
+                        <div class="glass rounded-xl p-5 card-hover animate-fade-in-up stagger-5">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-xl gradient-secondary flex items-center justify-center"><i class="fas fa-home text-white text-xl"></i></div>
+                                <div><p class="text-2xl font-bold text-secondary-700" id="statAsrama">8</p><p class="text-sm text-secondary-500">Jumlah Asrama</p></div>
+                            </div>
+                        </div>
+                        <div class="glass rounded-xl p-5 card-hover animate-fade-in-up stagger-5 col-span-2 lg:col-span-1">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-xl gradient-gold flex items-center justify-center"><i class="fas fa-users text-white text-xl"></i></div>
+                                <div><p class="text-2xl font-bold text-amber-700" id="statTotal">0</p><p class="text-sm text-amber-600">Total Santri</p></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid lg:grid-cols-3 gap-6">
+                        <div class="glass rounded-xl p-6 animate-fade-in-up">
+                            <h3 class="font-bold text-primary-700 mb-4 flex items-center gap-2"><i class="fas fa-bolt text-accent-gold"></i>Aksi Cepat</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="showPage('tambahSantri')" class="p-4 rounded-xl bg-primary-50 hover:bg-primary-100 transition-all group">
+                                    <i class="fas fa-user-plus text-primary-600 text-xl mb-2 group-hover:scale-110 transition-transform"></i>
+                                    <p class="text-sm font-medium text-primary-700">Tambah Santri</p>
+                                </button>
+                                <button onclick="showPage('dataSantri')" class="p-4 rounded-xl bg-secondary-50 hover:bg-secondary-100 transition-all group">
+                                    <i class="fas fa-list text-secondary-600 text-xl mb-2 group-hover:scale-110 transition-transform"></i>
+                                    <p class="text-sm font-medium text-secondary-700">Lihat Data</p>
+                                </button>
+                                <button onclick="exportData()" class="p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-all group">
+                                    <i class="fas fa-file-excel text-green-600 text-xl mb-2 group-hover:scale-110 transition-transform"></i>
+                                    <p class="text-sm font-medium text-green-700">Export Excel</p>
+                                </button>
+                                <button onclick="showPage('pengaturan')" class="p-4 rounded-xl bg-orange-50 hover:bg-orange-100 transition-all group">
+                                    <i class="fas fa-cog text-orange-600 text-xl mb-2 group-hover:scale-110 transition-transform"></i>
+                                    <p class="text-sm font-medium text-orange-700">Pengaturan</p>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-2 glass rounded-xl p-6 animate-fade-in-up">
+                            <h3 class="font-bold text-primary-700 mb-4 flex items-center gap-2"><i class="fas fa-clock text-accent-gold"></i>Aktivitas Terbaru</h3>
+                            <div class="space-y-3 max-h-64 overflow-y-auto" id="activityList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Santri Page -->
+                <div id="page-dataSantri" class="page-content hidden">
+                    <div class="glass rounded-xl overflow-hidden animate-fade-in-up">
+                        <div class="p-4 lg:p-6 border-b border-primary-100">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                <div class="flex flex-col sm:flex-row gap-3 flex-1">
+                                    <div class="relative flex-1 max-w-md">
+                                        <input type="text" id="searchInput" placeholder="Cari nama, NIS, atau kelas..." class="input-modern w-full pl-10 pr-4 py-2.5 rounded-lg focus-ring" oninput="filterTable()">
+                                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-primary-400"></i>
+                                    </div>
+                                    <select id="filterKelas" onchange="filterTable()" class="input-modern px-4 py-2.5 rounded-lg focus-ring min-w-[140px]">
+                                        <option value="">Semua Kelas</option>
+                                    </select>
+                                    <select id="filterStatus" onchange="filterTable()" class="input-modern px-4 py-2.5 rounded-lg focus-ring min-w-[140px]">
+                                        <option value="">Semua Status</option>
+                                        <option value="Aktif">Aktif</option>
+                                        <option value="Baru">Baru</option>
+                                        <option value="Lulus">Lulus</option>
+                                        <option value="Nonaktif">Nonaktif</option>
+                                    </select>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="exportData()" class="px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-all flex items-center gap-2">
+                                        <i class="fas fa-file-excel"></i><span class="hidden sm:inline">Export</span>
+                                    </button>
+                                    <button onclick="showPage('tambahSantri')" class="btn-primary px-4 py-2.5 rounded-lg text-white text-sm font-medium flex items-center gap-2">
+                                        <i class="fas fa-plus"></i><span class="hidden sm:inline">Tambah</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="table-modern w-full">
+                                <thead class="bg-primary-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-primary-600 uppercase tracking-wider">No</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-primary-600 uppercase tracking-wider">NIS</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-primary-600 uppercase tracking-wider">Nama</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-primary-600 uppercase tracking-wider hidden md:table-cell">Kelas</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-primary-600 uppercase tracking-wider hidden lg:table-cell">Domisili</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-primary-600 uppercase tracking-wider hidden lg:table-cell">Status</th>
+                                        <th class="px-4 py-3 text-center text-xs font-semibold text-primary-600 uppercase tracking-wider">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="santriTableBody" class="divide-y divide-primary-50"></tbody>
+                            </table>
+                        </div>
+                        <div class="p-4 border-t border-primary-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <p class="text-sm text-primary-500">Menampilkan <span id="showingFrom">1</span>-<span id="showingTo">10</span> dari <span id="totalData">0</span> data</p>
+                            <div class="flex items-center gap-2" id="pagination"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tambah Santri Page -->
+                <div id="page-tambahSantri" class="page-content hidden">
+                    <div class="max-w-4xl mx-auto">
+                        <form id="santriForm" class="space-y-6 animate-fade-in-up">
+                            <!-- Data Pendaftaran -->
+                            <div class="glass rounded-xl p-6">
+                                <h3 class="font-bold text-primary-700 mb-4 flex items-center gap-2">
+                                    <span class="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-sm">1</span>Data Pendaftaran
+                                </h3>
+                                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">NIS *</label>
+                                        <input type="text" name="nis" required class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nomor Induk Santri">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Nomor Daftar</label>
+                                        <input type="text" name="noDaftar" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nomor Pendaftaran">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Tanggal Daftar *</label>
+                                        <input type="date" name="tanggalDaftar" required class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Tanggal Masuk *</label>
+                                        <input type="date" name="tanggalMasuk" required class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Data Identitas -->
+                            <div class="glass rounded-xl p-6">
+                                <h3 class="font-bold text-primary-700 mb-4 flex items-center gap-2">
+                                    <span class="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-sm">2</span>Data Identitas Santri
+                                </h3>
+                                <div class="grid sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Nama Lengkap *</label>
+                                        <input type="text" name="namaLengkap" required class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nama lengkap santri">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Nama Sesuai Akte</label>
+                                        <input type="text" name="namaAkte" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nama pada akte kelahiran">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Tempat Lahir</label>
+                                        <input type="text" name="tempatLahir" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Kota kelahiran">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Tanggal Lahir *</label>
+                                        <input type="date" name="tanggalLahir" required class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">NIK</label>
+                                        <input type="text" name="nik" pattern="[0-9]{16}" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="16 digit NIK" maxlength="16">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">NISN</label>
+                                        <input type="text" name="nisn" pattern="[0-9]+" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nomor NISN">
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">No. Kartu Keluarga (KK)</label>
+                                        <input type="text" name="kk" pattern="[0-9]{16}" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="16 digit No. KK" maxlength="16">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Data Alamat -->
+                            <div class="glass rounded-xl p-6">
+                                <h3 class="font-bold text-primary-700 mb-4 flex items-center gap-2">
+                                    <span class="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-sm">3</span>Data Alamat
+                                </h3>
+                                <div class="grid sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Desa/Kelurahan</label>
+                                        <input type="text" name="desa" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nama desa">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Kecamatan</label>
+                                        <input type="text" name="kecamatan" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nama kecamatan">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Kabupaten/Kota</label>
+                                        <input type="text" name="kabupaten" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nama kabupaten">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Provinsi</label>
+                                        <input type="text" name="provinsi" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nama provinsi">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Data Orang Tua -->
+                            <div class="glass rounded-xl p-6">
+                                <h3 class="font-bold text-primary-700 mb-4 flex items-center gap-2">
+                                    <span class="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-sm">4</span>Data Orang Tua
+                                </h3>
+                                <div class="grid sm:grid-cols-2 gap-4">
+                                    <div class="sm:col-span-2"><h4 class="text-sm font-semibold text-primary-600 mb-3 flex items-center gap-2"><i class="fas fa-male text-primary-500"></i> Data Ayah</h4></div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Nama Ayah</label>
+                                        <input type="text" name="namaAyah" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nama lengkap ayah">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">No. HP Ayah</label>
+                                        <input type="tel" name="hpAyah" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nomor HP ayah">
+                                    </div>
+
+                                    <div class="sm:col-span-2 mt-4"><h4 class="text-sm font-semibold text-primary-600 mb-3 flex items-center gap-2"><i class="fas fa-female text-primary-500"></i> Data Ibu</h4></div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Nama Ibu</label>
+                                        <input type="text" name="namaIbu" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nama lengkap ibu">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">No. HP Ibu</label>
+                                        <input type="tel" name="hpIbu" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nomor HP ibu">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Data Wali -->
+                            <div class="glass rounded-xl p-6">
+                                <h3 class="font-bold text-primary-700 mb-4 flex items-center gap-2">
+                                    <span class="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-sm">5</span>Data Wali (Opsional)
+                                </h3>
+                                <div class="grid sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Nama Wali</label>
+                                        <input type="text" name="namaWali" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nama lengkap wali">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">No. HP Wali</label>
+                                        <input type="tel" name="hpWali" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nomor HP wali">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Data Domisili & Akademik -->
+                            <div class="glass rounded-xl p-6">
+                                <h3 class="font-bold text-primary-700 mb-4 flex items-center gap-2">
+                                    <span class="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-sm">6</span>Data Domisili & Akademik
+                                </h3>
+                                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Status Domisili *</label>
+                                        <select name="statusDomisili" required class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring">
+                                            <option value="">Pilih status</option>
+                                            <option value="Mukim">Mukim (Mondok)</option>
+                                            <option value="Pulang-Pergi">Pulang-Pergi</option>
+                                            <option value="Lainnya">Lainnya</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Asrama/Kamar</label>
+                                        <input type="text" name="asrama" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nama/No. Asrama">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Kelas *</label>
+                                        <input type="text" name="kelas" required class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Contoh: Kelas 1, Kelas 10 MA">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">No. Absen</label>
+                                        <input type="number" name="absen" min="1" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nomor absen">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Ruang Kelas</label>
+                                        <input type="text" name="ruangKelas" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring" placeholder="Nama ruang kelas">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-primary-700 mb-2">Status Santri *</label>
+                                        <select name="status" required class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring">
+                                            <option value="Aktif">Aktif</option>
+                                            <option value="Baru">Baru</option>
+                                            <option value="Lulus">Lulus</option>
+                                            <option value="Nonaktif">Nonaktif</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Keterangan -->
+                            <div class="glass rounded-xl p-6">
+                                <h3 class="font-bold text-primary-700 mb-4 flex items-center gap-2">
+                                    <span class="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-sm">7</span>Keterangan Tambahan
+                                </h3>
+                                <div>
+                                    <label class="block text-sm font-medium text-primary-700 mb-2">Catatan</label>
+                                    <textarea name="keterangan" rows="3" class="input-modern w-full px-4 py-2.5 rounded-lg focus-ring resize-none" placeholder="Catatan tambahan tentang santri"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="flex flex-col sm:flex-row gap-3 justify-end">
+                                <button type="button" onclick="resetForm()" class="px-6 py-3 rounded-xl border-2 border-primary-200 text-primary-600 font-semibold hover:bg-primary-50 transition-all flex items-center justify-center gap-2">
+                                    <i class="fas fa-undo"></i><span>Reset</span>
+                                </button>
+                                <button type="button" onclick="saveSantriData()" class="btn-primary px-8 py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2">
+                                    <i class="fas fa-save"></i><span>Simpan Data</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Detail Santri Page -->
+                <div id="page-detailSantri" class="page-content hidden">
+                    <div class="max-w-4xl mx-auto animate-fade-in-up">
+                        <button onclick="showPage('dataSantri')" class="mb-4 px-4 py-2 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 transition-all flex items-center gap-2">
+                            <i class="fas fa-arrow-left"></i><span>Kembali ke Data</span>
+                        </button>
+                        <div class="glass rounded-xl overflow-hidden">
+                            <div class="gradient-primary p-6 relative overflow-hidden">
+                                <div class="relative flex flex-col sm:flex-row items-center gap-6">
+                                    <div class="w-24 h-24 rounded-xl bg-white/20 flex items-center justify-center overflow-hidden">
+                                        <i class="fas fa-user text-4xl text-white/60"></i>
+                                    </div>
+                                    <div class="text-center sm:text-left text-white">
+                                        <h2 class="font-display text-2xl font-bold" id="detailNama">-</h2>
+                                        <p class="text-white/80 mt-1">NIS: <span id="detailNis">-</span></p>
+                                        <span class="inline-block mt-2 px-3 py-1 rounded-full bg-white/20 text-sm" id="detailStatus">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-6 space-y-6" id="detailContent"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Riwayat Page -->
+                <div id="page-riwayat" class="page-content hidden">
+                    <div class="glass rounded-xl overflow-hidden animate-fade-in-up">
+                        <div class="p-6 border-t border-primary-100">
+                            <h3 class="font-bold text-primary-700 flex items-center gap-2"><i class="fas fa-history text-accent-gold"></i>Riwayat Perubahan Data</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="table-modern w-full">
+                                <thead class="bg-primary-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-primary-600 uppercase">Waktu</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-primary-600 uppercase">User</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-primary-600 uppercase">Aksi</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-primary-600 uppercase">Detail</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="riwayatTableBody" class="divide-y divide-primary-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pengaturan Page -->
+                <div id="page-pengaturan" class="page-content hidden">
+                    <div class="grid lg:grid-cols-2 gap-6 animate-fade-in-up">
+                        <div class="glass rounded-xl p-6">
+                            <h3 class="font-bold text-primary-700 mb-4 flex items-center gap-2"><i class="fas fa-database text-accent-gold"></i>Backup & Restore Database</h3>
+                            <p class="text-sm text-primary-500 mb-4">Cadangkan data sistem untuk mencegah kehilangan data.</p>
+                            <div class="space-y-3">
+                                <button onclick="backupData()" class="w-full py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-medium transition-all flex items-center justify-center gap-2">
+                                    <i class="fas fa-download"></i><span>Backup Data</span>
+                                </button>
+                                <div class="relative">
+                                    <input type="file" id="restoreFile" accept=".json" class="hidden" onchange="restoreData(this)">
+                                    <button onclick="document.getElementById('restoreFile').click()" class="w-full py-3 rounded-xl border-2 border-primary-200 text-primary-600 font-medium hover:bg-primary-50 transition-all flex items-center justify-center gap-2">
+                                        <i class="fas fa-upload"></i><span>Restore Data</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass rounded-xl p-6">
+                            <h3 class="font-bold text-primary-700 mb-4 flex items-center gap-2"><i class="fas fa-info-circle text-accent-gold"></i>Informasi Sistem</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-4 rounded-xl bg-primary-50"><p class="text-sm text-primary-500">Versi Sistem</p><p class="text-lg font-bold text-primary-700">2.0.4</p></div>
+                                <div class="p-4 rounded-xl bg-primary-50"><p class="text-sm text-primary-500">Total Santri</p><p class="text-lg font-bold text-primary-700" id="sysTotalSantri">0</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0" onclick="closeModal()"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
+            <div class="glass rounded-2xl overflow-hidden animate-fade-in-up">
+                <div class="p-6" id="modalContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 z-50 hidden">
+        <div class="glass rounded-xl px-6 py-4 shadow-lg flex items-center gap-3 animate-fade-in-up">
+            <i class="fas fa-check-circle text-green-500 text-xl" id="toastIcon"></i>
+            <p class="text-sm font-medium text-primary-700" id="toastMessage">Berhasil!</p>
+        </div>
+    </div>
+
+    <script>
+        // ==================== VARIABLES & DATA ====================
+        let currentUser = { nama: 'Administrator', username: 'admin', role: 'Admin' };
+        let editingSantriId = null;
+        let currentSantriPage = 1;
+        const itemsPerPage = 10;
+
+        const defaultUsers = [{ id: 1, username: 'rifqi', password: 'rifqi123', nama: 'Rifqi', role: 'Admin', status: 'Aktif' }];
+        const defaultSantri = [
+            { id: 1, nis: '2024001', noDaftar: 'REG-001', tanggalDaftar: '2024-01-15', tanggalMasuk: '2024-01-15', namaLengkap: 'Ahmad Fauzan', namaAkte: 'Ahmad Fauzan', tempatLahir: 'Jakarta', tanggalLahir: '2008-05-10', nik: '3171234567890001', nisn: '1234567890', kk: '3171234567890001', desa: 'Menteng', kecamatan: 'Menteng', kabupaten: 'Jakarta Pusat', provinsi: 'DKI Jakarta', namaAyah: 'H. Ahmad Ridwan', hpAyah: '081234567890', namaIbu: 'Hj. Siti Aminah', hpIbu: '081234567891', namaWali: '', hpWali: '', statusDomisili: 'Mukim', asrama: 'Asrama Putra A', kelas: 'Kelas 10', absen: '1', ruangKelas: 'A-1', status: 'Aktif', keterangan: '', foto: '', created: new Date().toISOString() }
+        ];
+        const defaultActivities = [{ time: new Date().toISOString(), user: 'System', action: 'Sistem dimulai', type: 'login' }];
+
+        // ==================== STORAGE FUNCTIONS ====================
+        function initializeData() {
+            if (!localStorage.getItem('sis_users')) localStorage.setItem('sis_users', JSON.stringify(defaultUsers));
+            if (!localStorage.getItem('sis_santri')) localStorage.setItem('sis_santri', JSON.stringify(defaultSantri));
+            if (!localStorage.getItem('sis_activities')) localStorage.setItem('sis_activities', JSON.stringify(defaultActivities));
+            if (!localStorage.getItem('sis_auditLog')) localStorage.setItem('sis_auditLog', JSON.stringify([]));
+        }
+        function getUsers() { return JSON.parse(localStorage.getItem('sis_users')) || defaultUsers; }
+        function getSantri() { return JSON.parse(localStorage.getItem('sis_santri')) || defaultSantri; }
+        function getActivities() { return JSON.parse(localStorage.getItem('sis_activities')) || defaultActivities; }
+        function getAuditLog() { return JSON.parse(localStorage.getItem('sis_auditLog')) || []; }
+
+        // ==================== CORE FUNCTIONS ====================
+        function showPage(page) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            const el = document.getElementById(`page-${page}`);
+            if (el) el.classList.remove('hidden');
+
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active', 'bg-white/10');
+                if (item.dataset.page === page) item.classList.add('active', 'bg-white/10');
+            });
+
+            const titles = {
+                dashboard: { title: 'Dashboard', subtitle: 'Ringkasan data santri' },
+                dataSantri: { title: 'Data Santri', subtitle: 'Kelola data santri terpadu' },
+                tambahSantri: { title: 'Tambah Santri', subtitle: 'Formulir pendaftaran santri baru' },
+                detailSantri: { title: 'Detail Santri', subtitle: 'Informasi lengkap santri' },
+                riwayat: { title: 'Riwayat Data', subtitle: 'Log perubahan data santri' },
+                pengaturan: { title: 'Pengaturan', subtitle: 'Konfigurasi sistem' }
+            };
+            if (titles[page]) {
+                document.getElementById('pageTitle').textContent = titles[page].title;
+                document.getElementById('pageSubtitle').textContent = titles[page].subtitle;
+            }
+
+            if (page === 'dashboard') loadDashboard();
+            if (page === 'dataSantri') loadSantriTable();
+            if (page === 'riwayat') loadRiwayat();
+            if (page === 'pengaturan') loadPengaturan();
+            if (window.innerWidth < 1024) closeSidebar();
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('hidden');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.add('hidden');
+        }
+
+        // ==================== DASHBOARD ====================
+        function loadDashboard() {
+            const santri = getSantri();
+            const stats = {
+                aktif: santri.filter(s => s.status === 'Aktif').length,
+                baru: santri.filter(s => s.status === 'Baru').length,
+                lulus: santri.filter(s => s.status === 'Lulus').length,
+                nonaktif: santri.filter(s => s.status === 'Nonaktif').length,
+                total: santri.length,
+                kelas: [...new Set(santri.map(s => s.kelas).filter(Boolean))].length
+            };
+
+            animateCounter('statAktif', stats.aktif);
+            animateCounter('statBaru', stats.baru);
+            animateCounter('statLulus', stats.lulus);
+            animateCounter('statNonaktif', stats.nonaktif);
+            animateCounter('statTotal', stats.total);
+            document.getElementById('statKelas').textContent = stats.kelas;
+
+            const acts = getActivities();
+            document.getElementById('activityList').innerHTML = acts.slice(0, 5).map(a => {
+                const icons = { login: 'fa-sign-in-alt text-green-500', create: 'fa-plus-circle text-primary-500', update: 'fa-edit text-secondary-500', delete: 'fa-trash-circle text-red-500' };
+                return `<div class="flex items-start gap-3 p-3 rounded-lg hover:bg-primary-50 transition-all">
+                    <div class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0"><i class="fas ${icons[a.type] || 'fa-info-circle text-primary-500'}"></i></div>
+                    <div class="flex-1 min-w-0"><p class="text-sm text-primary-700">${a.action}</p><p class="text-xs text-primary-400 mt-1">${a.user} - ${new Date(a.time).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p></div>
+                </div>`;
+            }).join('');
+        }
+        function animateCounter(id, target) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            let curr = 0;
+            const inc = target / 20;
+            const t = setInterval(() => { curr += inc; if (curr >= target) { el.textContent = target; clearInterval(t); } else el.textContent = Math.floor(curr); }, 50);
+        }
+
+        // ==================== SANTRI TABLE ====================
+        function populateKelasFilter() {
+            const santri = getSantri();
+            const kelasSet = new Set(santri.map(s => s.kelas).filter(Boolean));
+            document.getElementById('filterKelas').innerHTML = '<option value="">Semua Kelas</option>' + Array.from(kelasSet).sort().map(k => `<option value="${k}">${k}</option>`).join('');
+        }
+        function loadSantriTable() {
+            populateKelasFilter();
+            const santri = getSantri();
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const fKelas = document.getElementById('filterKelas').value;
+            const fStatus = document.getElementById('filterStatus').value;
+
+            let filtered = santri.filter(s => {
+                const matchS = !search || s.namaLengkap.toLowerCase().includes(search) || s.nis.toLowerCase().includes(search) || (s.kelas && s.kelas.toLowerCase().includes(search));
+                return matchS && (!fKelas || s.kelas === fKelas) && (!fStatus || s.status === fStatus);
+            });
+
+            const total = filtered.length;
+            const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
+            currentSantriPage = Math.min(currentSantriPage, totalPages);
+            const start = (currentSantriPage - 1) * itemsPerPage;
+            const paged = filtered.slice(start, start + itemsPerPage);
+
+            document.getElementById('santriTableBody').innerHTML = paged.map((s, i) => `
+                <tr class="hover:bg-primary-50/50 transition-all">
+                    <td class="px-4 py-3 text-sm text-primary-600">${start + i + 1}</td>
+                    <td class="px-4 py-3 text-sm font-medium text-primary-700">${s.nis}</td>
+                    <td class="px-4 py-3"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-medium text-xs">${s.namaLengkap.charAt(0)}</div><p class="text-sm font-medium text-primary-700">${s.namaLengkap}</p></div></td>
+                    <td class="px-4 py-3 text-sm text-primary-600 hidden md:table-cell">${s.kelas || '-'}</td>
+                    <td class="px-4 py-3 text-sm text-primary-600 hidden lg:table-cell">${s.statusDomisili || '-'}</td>
+                    <td class="px-4 py-3 hidden lg:table-cell"><span class="badge ${getStatusBadge(s.status)}">${s.status}</span></td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="viewDetail(${s.id})" class="p-2 rounded-lg hover:bg-primary-100 text-primary-600 transition-all" title="Detail"><i class="fas fa-eye"></i></button>
+                            <button onclick="editSantri(${s.id})" class="p-2 rounded-lg hover:bg-secondary-100 text-secondary-600 transition-all" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteSantri(${s.id})" class="p-2 rounded-lg hover:bg-red-100 text-red-500 transition-all" title="Hapus"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>`
+            ).join('') || `<tr><td colspan="7" class="px-4 py-8 text-center text-primary-400"><i class="fas fa-inbox text-4xl mb-2 block"></i>Tidak ada data santri</td></tr>`;
+
+            document.getElementById('showingFrom').textContent = total > 0 ? start + 1 : 0;
+            document.getElementById('showingTo').textContent = Math.min(start + itemsPerPage, total);
+            document.getElementById('totalData').textContent = total;
+            renderPagination(totalPages);
+        }
+        function getStatusBadge(s) { return { 'Aktif': 'bg-primary-100 text-primary-600', 'Baru': 'bg-secondary-100 text-secondary-600', 'Lulus': 'bg-green-100 text-green-600', 'Nonaktif': 'bg-orange-100 text-orange-600' }[s] || 'bg-gray-100 text-gray-600'; }
+        function renderPagination(tp) {
+            let h = `<button onclick="changePage(${currentSantriPage - 1})" ${currentSantriPage === 1 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg border border-primary-200 text-primary-600 hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><i class="fas fa-chevron-left"></i></button>`;
+            for (let i = 1; i <= tp; i++) { if (i === 1 || i === tp || (i >= currentSantriPage - 1 && i <= currentSantriPage + 1)) h += `<button onclick="changePage(${i})" class="px-3 py-1.5 rounded-lg ${i === currentSantriPage ? 'bg-primary-600 text-white' : 'border border-primary-200 text-primary-600 hover:bg-primary-50'} transition-all">${i}</button>`; else if (i === currentSantriPage - 2 || i === currentSantriPage + 2) h += '<span class="px-2 text-primary-400">...</span>'; }
+            h += `<button onclick="changePage(${currentSantriPage + 1})" ${currentSantriPage === tp ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg border border-primary-200 text-primary-600 hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"><i class="fas fa-chevron-right"></i></button>`;
+            document.getElementById('pagination').innerHTML = h;
+        }
+        function changePage(p) { const tp = Math.max(1, Math.ceil(getSantri().length / itemsPerPage)); if (p >= 1 && p <= tp) { currentSantriPage = p; loadSantriTable(); } }
+        function filterTable() { currentSantriPage = 1; loadSantriTable(); }
+
+        // ==================== SANTRI FORM LOGIC ====================
+        function saveSantriData() {
+            const form = document.getElementById('santriForm');
+            const formData = new FormData(form);
+            const santriList = getSantri();
+            
+            const requiredFields = ['nis', 'namaLengkap', 'tanggalDaftar', 'tanggalMasuk', 'tanggalLahir', 'statusDomisili', 'kelas', 'status'];
+            for (let field of requiredFields) {
+                if (!formData.get(field)) {
+                    showToast(`Field ${field} wajib diisi!`, 'error');
+                    return;
+                }
+            }
+
+            const data = {
+                nis: formData.get('nis') || '', noDaftar: formData.get('noDaftar') || '', tanggalDaftar: formData.get('tanggalDaftar') || '', tanggalMasuk: formData.get('tanggalMasuk') || '',
+                namaLengkap: formData.get('namaLengkap') || '', namaAkte: formData.get('namaAkte') || '', tempatLahir: formData.get('tempatLahir') || '', tanggalLahir: formData.get('tanggalLahir') || '',
+                nik: formData.get('nik') || '', nisn: formData.get('nisn') || '', kk: formData.get('kk') || '',
+                desa: formData.get('desa') || '', kecamatan: formData.get('kecamatan') || '', kabupaten: formData.get('kabupaten') || '', provinsi: formData.get('provinsi') || '',
+                namaAyah: formData.get('namaAyah') || '', hpAyah: formData.get('hpAyah') || '',
+                namaIbu: formData.get('namaIbu') || '', hpIbu: formData.get('hpIbu') || '',
+                namaWali: formData.get('namaWali') || '', hpWali: formData.get('hpWali') || '',
+                statusDomisili: formData.get('statusDomisili') || '', asrama: formData.get('asrama') || '',
+                kelas: formData.get('kelas') || '', absen: formData.get('absen') || '', ruangKelas: formData.get('ruangKelas') || '',
+                status: formData.get('status') || '', keterangan: formData.get('keterangan') || '', foto: ''
+            };
+
+            const exists = santriList.find(s => s.nis === data.nis && s.id !== editingSantriId);
+            if (exists) { showToast('NIS sudah terdaftar!', 'error'); return; }
+
+            if (editingSantriId) {
+                const idx = santriList.findIndex(s => s.id === editingSantriId);
+                if (idx !== -1) {
+                    santriList[idx] = { ...santriList[idx], ...data, id: editingSantriId, created: santriList[idx].created, updated: new Date().toISOString() };
+                    addActivity(`Mengupdate data santri: ${data.namaLengkap}`, 'update');
+                    addAuditLog('UPDATE_SANTRI', `Data ${data.namaLengkap} diperbarui`);
+                    showToast('Data berhasil diperbarui!');
+                }
+            } else {
+                santriList.push({ id: Date.now(), ...data, created: new Date().toISOString(), updated: new Date().toISOString() });
+                addActivity(`Menambahkan santri baru: ${data.namaLengkap}`, 'create');
+                addAuditLog('CREATE_SANTRI', `Santri baru ${data.namaLengkap} ditambahkan`);
+                showToast('Santri berhasil ditambahkan!');
+            }
+
+            localStorage.setItem('sis_santri', JSON.stringify(santriList));
+            resetForm();
+            showPage('dataSantri');
+        }
+
+        function editSantri(id) {
+            const s = getSantri().find(item => item.id === id);
+            if (s) {
+                editingSantriId = id;
+                const form = document.getElementById('santriForm');
+                form.reset();
+                form.querySelectorAll('input, select, textarea').forEach(field => {
+                    if (s[field.name] !== undefined) field.value = s[field.name] || '';
+                });
+                showPage('tambahSantri');
+                document.getElementById('pageTitle').textContent = 'Edit Santri';
+                document.getElementById('pageSubtitle').textContent = 'Edit data santri';
+            }
+        }
+
+        function deleteSantri(id) {
+            showConfirmModal('Hapus Data Santri', 'Apakah Anda yakin ingin menghapus data santri ini?', () => {
+                // Logic hapus
+                let list = getSantri();
+                const s = list.find(i => i.id === id);
+                list = list.filter(i => i.id !== id);
+                localStorage.setItem('sis_santri', JSON.stringify(list));
+                
+                // Logging
+                addActivity(`Menghapus data: ${s ? s.namaLengkap : id}`, 'delete');
+                addAuditLog('DELETE_SANTRI', `Santri ${s ? s.namaLengkap : id} dihapus`);
+                
+                // UI Feedback
+                showToast('Data berhasil dihapus!');
+                loadSantriTable(); // Refresh table
+            });
+        }
+
+        function resetForm() {
+            document.getElementById('santriForm').reset();
+            editingSantriId = null;
+            document.getElementById('pageTitle').textContent = 'Tambah Santri';
+            document.getElementById('pageSubtitle').textContent = 'Formulir pendaftaran santri baru';
+        }
+
+        // ==================== DETAIL ====================
+        function viewDetail(id) {
+            const s = getSantri().find(i => i.id === id);
+            if (s) {
+                document.getElementById('detailNama').textContent = s.namaLengkap;
+                document.getElementById('detailNis').textContent = s.nis;
+                document.getElementById('detailStatus').textContent = s.status;
+                document.getElementById('detailContent').innerHTML = `
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-xl bg-primary-50"><h4 class="font-semibold text-primary-700 mb-2">Identitas</h4><div class="space-y-1 text-sm"><p><span class="text-primary-500">TTL:</span> ${s.tempatLahir || '-'}, ${s.tanggalLahir || '-'}</p><p><span class="text-primary-500">NIK:</span> ${s.nik || '-'}</p><p><span class="text-primary-500">No. KK:</span> ${s.kk || '-'}</p></div></div>
+                        <div class="p-4 rounded-xl bg-primary-50"><h4 class="font-semibold text-primary-700 mb-2">Akademik</h4><div class="space-y-1 text-sm"><p><span class="text-primary-500">Kelas:</span> ${s.kelas || '-'}</p><p><span class="text-primary-500">Domisili:</span> ${s.statusDomisili || '-'}</p><p><span class="text-primary-500">Tgl Masuk:</span> ${s.tanggalMasuk || '-'}</p></div></div>
+                    </div>
+                    <div class="flex gap-3 justify-end pt-4 border-t border-primary-100 mt-4">
+                        <button onclick="editSantri(${s.id})" class="btn-secondary px-6 py-2.5 rounded-xl text-white font-medium flex items-center gap-2"><i class="fas fa-edit"></i><span>Edit Data</span></button>
+                    </div>`;
+                showPage('detailSantri');
+            }
+        }
+
+        // ==================== OTHER PAGES ====================
+        function loadRiwayat() {
+            document.getElementById('riwayatTableBody').innerHTML = getAuditLog().slice(0, 50).reverse().map(l => `<tr><td class="px-4 py-3 text-sm text-primary-600">${new Date(l.time).toLocaleString('id-ID')}</td><td class="px-4 py-3 text-sm font-medium text-primary-700">${l.user}</td><td class="px-4 py-3"><span class="badge bg-primary-100 text-primary-600">${l.type}</span></td><td class="px-4 py-3 text-sm text-primary-600">${l.detail}</td></tr>`).join('') || `<tr><td colspan="4" class="px-4 py-8 text-center text-primary-400">Belum ada riwayat</td></tr>`;
+        }
+        function loadPengaturan() {
+            document.getElementById('sysTotalSantri').textContent = getSantri().length;
+        }
+        function backupData() {
+            const data = { santri: getSantri(), users: getUsers(), activities: getActivities(), auditLog: getAuditLog(), backupDate: new Date().toISOString() };
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+            a.download = `backup_sis_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            addAuditLog('BACKUP', 'Backup diunduh');
+            showToast('Backup berhasil!');
+        }
+        function restoreData(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const d = JSON.parse(e.target.result);
+                        if (d.santri) localStorage.setItem('sis_santri', JSON.stringify(d.santri));
+                        if (d.users) localStorage.setItem('sis_users', JSON.stringify(d.users));
+                        showToast('Data berhasil di-restore!');
+                        setTimeout(() => location.reload(), 1000);
+                    } catch { showToast('File tidak valid!', 'error'); }
+                };
+                reader.readAsText(input.files[0]);
+            }
+        }
+
+        // ==================== EXPORT XLSX (UPDATED TO INCLUDE ALL FIELDS) ====================
+        function exportData() {
+            const santri = getSantri();
+            
+            // Define Headers - SESUAI FORM INPUT
+            const headers = [
+                'No', 'NIS', 'Nomor Daftar', 'Tanggal Daftar', 'Tanggal Masuk',
+                'Nama Lengkap', 'Nama Akte', 'Tempat Lahir', 'Tanggal Lahir', 'NIK', 'NISN', 'No KK',
+                'Desa', 'Kecamatan', 'Kabupaten', 'Provinsi',
+                'Nama Ayah', 'NIK Ayah', 'Pekerjaan Ayah', 'No HP Ayah',
+                'Nama Ibu', 'NIK Ibu', 'Pekerjaan Ibu', 'No HP Ibu',
+                'Nama Wali', 'NIK Wali', 'Hubungan Wali', 'No HP Wali',
+                'Status Domisili', 'Asrama', 'Kelas', 'No Absen', 'Ruang Kelas', 'Status Santri', 'Keterangan'
+            ];
+            
+            // Map Data to Rows
+            const rows = santri.map((s, i) => [
+                i + 1, 
+                s.nis, 
+                s.noDaftar || '', 
+                s.tanggalDaftar || '', 
+                s.tanggalMasuk || '',
+                s.namaLengkap || '', 
+                s.namaAkte || '', 
+                s.tempatLahir || '', 
+                s.tanggalLahir || '', 
+                s.nik || '', 
+                s.nisn || '', 
+                s.kk || '',
+                s.desa || '', 
+                s.kecamatan || '', 
+                s.kabupaten || '', 
+                s.provinsi || '',
+                s.namaAyah || '', 
+                s.nikAyah || '', 
+                s.pekerjaanAyah || '', 
+                s.hpAyah || '',
+                s.namaIbu || '', 
+                s.nikIbu || '', 
+                s.pekerjaanIbu || '', 
+                s.hpIbu || '',
+                s.namaWali || '', 
+                s.nikWali || '', 
+                s.hubunganWali || '', 
+                s.hpWali || '',
+                s.statusDomisili || '', 
+                s.asrama || '', 
+                s.kelas || '', 
+                s.absen || '', 
+                s.ruangKelas || '', 
+                s.status || '', 
+                s.keterangan || ''
+            ]);
+
+            // Combine Headers and Rows
+            const wsData = [headers, ...rows];
+            
+            // Create Worksheet
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            
+            // Set Column Widths
+            ws['!cols'] = [
+                {wch:5},  // No
+                {wch:15}, // NIS
+                {wch:12}, // No Daftar
+                {wch:12}, // Tgl Daftar
+                {wch:12}, // Tgl Masuk
+                {wch:25}, // Nama
+                {wch:25}, // Nama Akte
+                {wch:15}, // Tempat Lahir
+                {wch:12}, // Tgl Lahir
+                {wch:20}, // NIK
+                {wch:12}, // NISN
+                {wch:20}, // KK
+                {wch:15}, // Desa
+                {wch:15}, // Kecamatan
+                {wch:15}, // Kabupaten
+                {wch:15}, // Provinsi
+                {wch:20}, // Nama Ayah
+                {wch:20}, // NIK Ayah
+                {wch:15}, // Pekerjaan Ayah
+                {wch:15}, // HP Ayah
+                {wch:20}, // Nama Ibu
+                {wch:20}, // NIK Ibu
+                {wch:15}, // Pekerjaan Ibu
+                {wch:15}, // HP Ibu
+                {wch:20}, // Nama Wali
+                {wch:20}, // NIK Wali
+                {wch:15}, // Hubungan Wali
+                {wch:15}, // HP Wali
+                {wch:15}, // Status Domisili
+                {wch:15}, // Asrama
+                {wch:15}, // Kelas
+                {wch:8},  // Absen
+                {wch:12}, // Ruang
+                {wch:10}, // Status
+                {wch:30}  // Keterangan
+            ];
+
+            // Create Workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data Santri Lengkap");
+
+            // Export File (XLSX)
+            XLSX.writeFile(wb, `data_santri_alinaroh_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            showToast('Export Excel berhasil!');
+        }
+
+        // ==================== UTILITIES ====================
+        function addActivity(a, t) { const l = getActivities(); l.unshift({ time: new Date().toISOString(), user: currentUser.nama, action: a, type: t }); localStorage.setItem('sis_activities', JSON.stringify(l.slice(0, 100))); }
+        function addAuditLog(t, d) { const l = getAuditLog(); l.push({ time: new Date().toISOString(), user: currentUser.username, type: t, detail: d }); localStorage.setItem('sis_auditLog', JSON.stringify(l.slice(-500))); }
+        function showToast(m, t = 'success') { const el = document.getElementById('toast'); document.getElementById('toastMessage').textContent = m; document.getElementById('toastIcon').className = t === 'success' ? 'fas fa-check-circle text-green-500 text-xl' : 'fas fa-exclamation-circle text-red-500 text-xl'; el.classList.remove('hidden'); setTimeout(() => el.classList.add('hidden'), 3000); }
+        
+        function showModal(c) { 
+            document.getElementById('modalContent').innerHTML = c; 
+            document.getElementById('modal').classList.remove('hidden'); 
+        }
+        
+        function closeModal() { 
+            document.getElementById('modal').classList.add('hidden'); 
+        }
+
+        function showConfirmModal(title, message, onConfirm) {
+            const modalContent = `
+                <h3 class="text-lg font-bold text-primary-700 mb-2">${title}</h3>
+                <p class="text-sm text-primary-600 mb-6">${message}</p>
+                <div class="flex gap-3 justify-end">
+                    <button id="modalCancelBtn" class="px-4 py-2 rounded-lg border border-primary-200 text-primary-600 hover:bg-primary-50 transition-all">Batal</button>
+                    <button id="modalConfirmBtn" class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-all">Hapus</button>
+                </div>`;
+            showModal(modalContent);
+            
+            // Attach Event Listeners properly
+            document.getElementById('modalCancelBtn').onclick = closeModal;
+            document.getElementById('modalConfirmBtn').onclick = () => {
+                if (typeof onConfirm === 'function') {
+                    onConfirm();
+                }
+                closeModal();
+            };
+        }
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', () => { initializeData(); showPage('dashboard'); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+    </script>
+</body>
+</html>
